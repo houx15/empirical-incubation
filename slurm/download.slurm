@@ -23,8 +23,10 @@
 
 set -euo pipefail
 
-: "${DATA_ROOT:=/scratch/network/yh6580/empirical-incubation}"
-: "${MANIFEST:=${SLURM_SUBMIT_DIR}/manifests/memetracker.txt}"
+# --- Download parameters (edit these) ----------------------------------------
+DATA_ROOT="/scratch/network/yh6580/empirical-incubation"
+MANIFEST="${SLURM_SUBMIT_DIR}/manifests/memetracker.txt"
+# -----------------------------------------------------------------------------
 
 module purge
 module load anaconda3/2023.3

@@ -12,16 +12,18 @@
 # sleeping-beauty memes, render PDFs + markdown report to a timestamped
 # run directory.  No network access is needed on the compute node.
 #
-# Submit with:
-#   sbatch --export=ALL,START=2008-08-01,END=2009-05-01 slurm/analyze.slurm
+# All analysis parameters are set below — edit this file directly and then
+# submit with:  sbatch slurm/analyze.slurm
 # =============================================================================
 
 set -euo pipefail
 
-: "${DATA_ROOT:=/scratch/network/yh6580/empirical-incubation}"
-: "${START:?set START=YYYY-MM-DD}"
-: "${END:?set END=YYYY-MM-DD (exclusive)}"
-: "${BIN_WIDTH_DAYS:=1}"
+# --- Analysis parameters (edit these) ----------------------------------------
+DATA_ROOT="/scratch/network/yh6580/empirical-incubation"
+START="2008-08-01"            # inclusive, YYYY-MM-DD
+END="2009-05-01"              # exclusive, YYYY-MM-DD
+BIN_WIDTH_DAYS=1
+# -----------------------------------------------------------------------------
 
 module purge
 module load anaconda3/2023.3
