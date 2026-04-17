@@ -1,18 +1,18 @@
 # SNAP MemeTracker9 quote archive manifest.
 #
 # Source page:   https://snap.stanford.edu/data/memetracker9.html
-# Data root:     http://snap.stanford.edu/bigdata/memetracker9/
+# Data root:     https://snap.stanford.edu/data/bigdata/memetracker9/
 #
 # Nine monthly files covering Aug 2008 through Apr 2009.  Blank lines and
 # lines starting with `#` are ignored.  Each record inside the file uses
 # per-line tags P (url) / T (timestamp) / Q (phrase) / L (link); some
 # records have zero Q or zero L entries.
-http://snap.stanford.edu/bigdata/memetracker9/quotes_2008-08.txt.gz
-http://snap.stanford.edu/bigdata/memetracker9/quotes_2008-09.txt.gz
-http://snap.stanford.edu/bigdata/memetracker9/quotes_2008-10.txt.gz
-http://snap.stanford.edu/bigdata/memetracker9/quotes_2008-11.txt.gz
-http://snap.stanford.edu/bigdata/memetracker9/quotes_2008-12.txt.gz
-http://snap.stanford.edu/bigdata/memetracker9/quotes_2009-01.txt.gz
-http://snap.stanford.edu/bigdata/memetracker9/quotes_2009-02.txt.gz
-http://snap.stanford.edu/bigdata/memetracker9/quotes_2009-03.txt.gz
-http://snap.stanford.edu/bigdata/memetracker9/quotes_2009-04.txt.gz
+https://snap.stanford.edu/data/bigdata/memetracker9/quotes_2008-08.txt.gz
+https://snap.stanford.edu/data/bigdata/memetracker9/quotes_2008-09.txt.gz
+https://snap.stanford.edu/data/bigdata/memetracker9/quotes_2008-10.txt.gz
+https://snap.stanford.edu/data/bigdata/memetracker9/quotes_2008-11.txt.gz
+https://snap.stanford.edu/data/bigdata/memetracker9/quotes_2008-12.txt.gz
+https://snap.stanford.edu/data/bigdata/memetracker9/quotes_2009-01.txt.gz
+https://snap.stanford.edu/data/bigdata/memetracker9/quotes_2009-02.txt.gz
+https://snap.stanford.edu/data/bigdata/memetracker9/quotes_2009-03.txt.gz
+https://snap.stanford.edu/data/bigdata/memetracker9/quotes_2009-04.txt.gz
