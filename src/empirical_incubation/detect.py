@@ -9,6 +9,8 @@ A trajectory qualifies iff:
      genuinely went quiet before exploding.
 """
 
+from __future__ import annotations
+
 from dataclasses import dataclass
 
 import numpy as np

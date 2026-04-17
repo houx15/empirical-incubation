@@ -5,6 +5,8 @@ Produces `report.md` under a target directory, along with:
   - hist_amplitude_ratio.pdf, hist_gap_ratio.pdf — feature distributions
 """
 
+from __future__ import annotations
+
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path

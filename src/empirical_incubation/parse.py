@@ -10,6 +10,8 @@ group of lines separated by a blank line, with line-type tags:
 Records with no timestamp or no phrase are skipped.
 """
 
+from __future__ import annotations
+
 import gzip
 from collections import defaultdict
 from collections.abc import Iterable, Iterator

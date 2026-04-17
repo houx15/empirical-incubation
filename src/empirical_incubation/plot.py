@@ -7,6 +7,8 @@ Optional `Features` overlay shades the early / dormancy / late phase regions
 and marks the early bump and main peak.
 """
 
+from __future__ import annotations
+
 from pathlib import Path
 
 import matplotlib

@@ -5,6 +5,8 @@ requested time window, runs the three-phase detector, and writes a report
 (plus per-meme PDFs and histograms) to `out_dir`.
 """
 
+from __future__ import annotations
+
 import hashlib
 from datetime import datetime
 from itertools import chain

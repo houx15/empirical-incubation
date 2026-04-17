@@ -5,6 +5,8 @@ Subcommands:
   analyze   Parse raw quote files, detect sleeping beauties, render a report.
 """
 
+from __future__ import annotations
+
 import argparse
 from datetime import datetime
 from pathlib import Path

@@ -6,6 +6,8 @@ with resume via the `Range` header on the next run. Skips re-downloading when
 is provided).
 """
 
+from __future__ import annotations
+
 import hashlib
 import urllib.request
 from pathlib import Path
