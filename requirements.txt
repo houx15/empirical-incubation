@@ -1,0 +1,12 @@
+# Runtime dependencies for cluster execution under `conda activate llm`.
+#
+# Most of these are already present in the `llm` conda environment. To ensure
+# compatibility on the cluster, run once from a login node (with internet):
+#
+#     conda activate llm
+#     pip install -r requirements.txt
+#
+# Local development uses uv + pyproject.toml instead.
+numpy>=1.24
+pandas>=2.0
+matplotlib>=3.7

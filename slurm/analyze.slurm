@@ -10,13 +10,7 @@
 # =============================================================================
 # Offline analysis: parse raw quote files under $DATA_ROOT/raw/, detect
 # sleeping-beauty memes, render PDFs + markdown report to a timestamped
-# run directory.  No network access is used.
-#
-# Prerequisites (run once on a login node with internet):
-#
-#   cd "$SLURM_SUBMIT_DIR"
-#   export UV_PROJECT_ENVIRONMENT=/scratch/network/yh6580/empirical-incubation/venv
-#   uv sync
+# run directory.  No network access is needed on the compute node.
 #
 # Submit with:
 #   sbatch --export=ALL,START=2008-08-01,END=2009-05-01 slurm/analyze.slurm
@@ -25,17 +19,19 @@
 set -euo pipefail
 
 : "${DATA_ROOT:=/scratch/network/yh6580/empirical-incubation}"
-: "${UV_PROJECT_ENVIRONMENT:=${DATA_ROOT}/venv}"
 : "${START:?set START=YYYY-MM-DD}"
 : "${END:?set END=YYYY-MM-DD (exclusive)}"
 : "${BIN_WIDTH_DAYS:=1}"
 
-export DATA_ROOT UV_PROJECT_ENVIRONMENT
+module purge
+module load anaconda3/2023.3
+conda activate llm
+
+cd "$SLURM_SUBMIT_DIR"
+export PYTHONPATH="${SLURM_SUBMIT_DIR}/src:${PYTHONPATH:-}"
 
 RUN_ID="$(date -u +%Y%m%dT%H%M%SZ)-${SLURM_JOB_ID:-local}"
 OUT_DIR="${DATA_ROOT}/runs/${RUN_ID}"
-
-cd "$SLURM_SUBMIT_DIR"
 mkdir -p "${OUT_DIR}"
 
 echo "=== Analysis job starting ==="
@@ -44,7 +40,7 @@ echo "  out-dir  : ${OUT_DIR}"
 echo "  window   : ${START} .. ${END}"
 echo "  bin-days : ${BIN_WIDTH_DAYS}"
 
-uv run empirical-incubation analyze \
+python -m empirical_incubation.cli analyze \
     --raw-dir "${DATA_ROOT}/raw" \
     --out-dir "${OUT_DIR}" \
     --start "${START}" \

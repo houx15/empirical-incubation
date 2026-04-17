@@ -9,36 +9,37 @@
 
 # =============================================================================
 # Fetch SNAP MemeTracker quote files listed in manifests/memetracker.txt into
-# $DATA_ROOT/raw/.  Run this on a partition that has outbound internet access;
-# the analysis job runs on offline compute nodes.
+# $DATA_ROOT/raw/.  Run on a partition that has outbound internet access;
+# analysis runs on offline compute nodes.
 #
-# Staging (run once, from a login node with internet + uv installed):
+# First-time setup (login node with internet):
 #
-#   cd "$SLURM_SUBMIT_DIR"
-#   export UV_PROJECT_ENVIRONMENT=/scratch/network/yh6580/empirical-incubation/venv
-#   uv sync
+#   module load anaconda3/2023.3
+#   conda activate llm
+#   pip install -r requirements.txt     # ensures numpy/pandas/matplotlib present
 #
-# Then submit with:   sbatch slurm/download.slurm
+# Submit with:  sbatch slurm/download.slurm
 # =============================================================================
 
 set -euo pipefail
 
 : "${DATA_ROOT:=/scratch/network/yh6580/empirical-incubation}"
-: "${UV_PROJECT_ENVIRONMENT:=${DATA_ROOT}/venv}"
 : "${MANIFEST:=${SLURM_SUBMIT_DIR}/manifests/memetracker.txt}"
 
-export DATA_ROOT UV_PROJECT_ENVIRONMENT
+module purge
+module load anaconda3/2023.3
+conda activate llm
 
 cd "$SLURM_SUBMIT_DIR"
+export PYTHONPATH="${SLURM_SUBMIT_DIR}/src:${PYTHONPATH:-}"
 
 mkdir -p "${DATA_ROOT}/raw"
 
 echo "=== Download job starting ==="
 echo "  manifest : ${MANIFEST}"
 echo "  dest-dir : ${DATA_ROOT}/raw"
-echo "  venv     : ${UV_PROJECT_ENVIRONMENT}"
 
-uv run empirical-incubation download \
+python -m empirical_incubation.cli download \
     --manifest "${MANIFEST}" \
     --dest-dir "${DATA_ROOT}/raw"
 
