@@ -16,7 +16,7 @@
 # submit with:  sbatch slurm/analyze.slurm
 # =============================================================================
 
-set -euo pipefail
+set -eo pipefail
 
 # --- Analysis parameters (edit these) ----------------------------------------
 DATA_ROOT="/scratch/network/yh6580/empirical-incubation"
@@ -28,6 +28,8 @@ BIN_WIDTH_DAYS=1
 module purge
 module load anaconda3/2023.3
 conda activate llm
+
+set -u
 
 cd "$SLURM_SUBMIT_DIR"
 export PYTHONPATH="${SLURM_SUBMIT_DIR}/src:${PYTHONPATH:-}"
