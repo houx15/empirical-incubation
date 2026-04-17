@@ -1,0 +1,39 @@
+[project]
+name = "empirical-incubation"
+version = "0.1.0"
+description = "Detect sleeping-beauty patterns (early bump → dormancy → late explosion) in time-series data such as MemeTracker mention counts."
+readme = "README.md"
+authors = [
+    { name = "houyuxin", email = "houyuxin1234@sina.cn" }
+]
+requires-python = ">=3.12"
+dependencies = [
+    "numpy>=2.0",
+    "scipy>=1.13",
+    "pandas>=2.2",
+    "matplotlib>=3.9",
+]
+
+[project.scripts]
+empirical-incubation = "empirical_incubation.cli:main"
+
+[build-system]
+requires = ["uv_build>=0.9.17,<0.10.0"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "pytest>=8.0",
+    "pytest-cov>=5.0",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = [
+    "network: tests that require live network access (skipped by default)",
+]
+addopts = "-m 'not network'"
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
