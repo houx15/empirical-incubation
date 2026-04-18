@@ -13,6 +13,7 @@ Records with no timestamp or no phrase are skipped.
 from __future__ import annotations
 
 import gzip
+import sys
 from collections import defaultdict
 from collections.abc import Iterable, Iterator
 from datetime import datetime, timedelta
@@ -41,7 +42,7 @@ def parse_quotes_file(path: Path) -> Iterator[tuple[str, datetime]]:
                 except ValueError:
                     timestamp = None
             elif tag == "Q" and value:
-                phrases.append(value)
+                phrases.append(sys.intern(value))
     yield from _flush(timestamp, phrases)
 
 
@@ -75,6 +76,7 @@ def build_trajectories(
     start: datetime,
     end: datetime,
     allowed_phrases: set[str] | None = None,
+    dtype: np.dtype = np.int32,
 ) -> dict[str, np.ndarray]:
     if end <= start:
         raise ValueError("end must be strictly after start")
@@ -89,7 +91,7 @@ def build_trajectories(
             continue
         traj = counts.get(phrase)
         if traj is None:
-            traj = np.zeros(n_bins, dtype=np.int64)
+            traj = np.zeros(n_bins, dtype=dtype)
             counts[phrase] = traj
         idx = (ts - start) // bin_width
         traj[idx] += 1

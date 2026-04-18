@@ -12,8 +12,11 @@ one post with one timestamp and one or more quoted phrases. Format:
 """
 
 import gzip
+import sys
 from datetime import datetime
 from pathlib import Path
+
+import numpy as np
 
 from empirical_incubation import parse
 
@@ -105,6 +108,37 @@ def test_build_trajectories_respects_allowed_phrases():
     assert set(trajectories.keys()) == {"yes we can", "other meme"}
     assert trajectories["yes we can"].tolist() == [1, 0, 0]
     assert trajectories["other meme"].tolist() == [0, 0, 1]
+
+
+def test_build_trajectories_defaults_to_int32():
+    records = [("x", datetime(2008, 9, 1, 12, 0))]
+    trajectories = parse.build_trajectories(
+        records,
+        bin_width_days=1,
+        start=datetime(2008, 9, 1),
+        end=datetime(2008, 9, 2),
+    )
+    assert trajectories["x"].dtype == np.int32
+
+
+def test_parse_quotes_file_interns_phrase_strings(tmp_path: Path):
+    content = (
+        "P\thttp://a/1\n"
+        "T\t2008-09-01 12:00:00\n"
+        "Q\tshared phrase\n"
+        "\n"
+        "P\thttp://a/2\n"
+        "T\t2008-09-02 12:00:00\n"
+        "Q\tshared phrase\n"
+    )
+    path = tmp_path / "quotes.txt.gz"
+    _write_fixture(path, content)
+
+    records = list(parse.parse_quotes_file(path))
+    # Same phrase across records must be the same object (interned), so pass-1
+    # and pass-2 dicts over 10M records can share string keys.
+    assert records[0][0] is records[1][0]
+    assert records[0][0] is sys.intern(records[0][0])
 
 
 def test_parse_quotes_file_skips_record_with_no_timestamp(tmp_path: Path):
