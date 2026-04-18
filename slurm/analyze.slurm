@@ -23,6 +23,8 @@ DATA_ROOT="/scratch/network/yh6580/empirical-incubation"
 START="2008-08-01"            # inclusive, YYYY-MM-DD
 END="2009-05-01"              # exclusive, YYYY-MM-DD
 BIN_WIDTH_DAYS=1
+MIN_TOTAL_MENTIONS=5
+TOP_N=100                     # number of top qualified phrases to plot
 # -----------------------------------------------------------------------------
 
 module purge
@@ -49,7 +51,9 @@ python -m empirical_incubation.cli analyze \
     --out-dir "${OUT_DIR}" \
     --start "${START}" \
     --end "${END}" \
-    --bin-width-days "${BIN_WIDTH_DAYS}"
+    --bin-width-days "${BIN_WIDTH_DAYS}" \
+    --min-total-mentions "${MIN_TOTAL_MENTIONS}" \
+    --top-n "${TOP_N}"
 
 echo "=== Analysis complete ==="
 echo "Report: ${OUT_DIR}/report.md"

@@ -7,22 +7,62 @@ The detector is stricter than the standard Ke et al. (2015) beauty coefficient: 
 ## Layout
 
 ```
-src/empirical_incubation/   package (download, parse, detect, plot, report, pipeline, cli)
-tests/                      pytest suite — 23 tests, all driven by synthetic fixtures
+src/empirical_incubation/
+  parse.py              SNAP format streaming parser
+  detect.py             three-phase feature extractor + qualification check
+  plot.py               per-trajectory PDF renderer
+  download.py           resumable HTTP download
+  pipeline.py           run_analysis: runs stages 1-4 end-to-end
+  stages/
+    clean.py            stage 1: raw gz -> (phrase, iso_ts) tsv.gz
+    aggregate.py        stage 2: tsv.gz -> phrases.txt + timelines.npy (int32 matrix)
+    score.py            stage 3: timelines.npy -> features.csv
+    report.py           stage 4: features.csv -> report.md + plots (top-N only)
+  cli.py                subcommands: download, clean, aggregate, score, report, analyze
+tests/                  pytest suite — synthetic fixtures only
 manifests/memetracker.txt   9 SNAP MemeTracker9 URLs (2008-08 .. 2009-04)
-slurm/analyze.slurm         offline analysis job (no network needed)
-slurm/download.slurm        kept for reference only — do NOT submit (compute nodes are offline)
-pyproject.toml              local dev (uv)
-requirements.txt            cluster (conda llm env)
+slurm/analyze.slurm     offline analysis job (runs all four stages)
+slurm/download.slurm    reference only — compute nodes are offline, run download on a login node
 ```
 
 Outputs are written under `$DATA_ROOT` (default `/scratch/network/yh6580/empirical-incubation/`) and are **never** committed to this repo.
+
+## Pipeline design
+
+Four disk-persisted stages trade compute for memory. Each stage reads its input, streams through the data, and writes a small intermediate artifact that the next stage consumes — so peak memory is bounded per-stage and every stage is independently resumable / inspectable.
+
+```
+raw/*.txt.gz                         ~GB gzipped SNAP dumps
+  │
+  │ clean  (stage 1, constant memory, per-file streaming)
+  ▼
+stages/clean/*.tsv.gz                compact (phrase, iso_ts) records
+  │
+  │ aggregate  (stage 2, two-pass: count → filter → dense matrix)
+  ▼
+stages/aggregate/
+  phrases.txt                        one phrase per line
+  timelines.npy                      int32 matrix (n_phrases, n_bins)
+  config.json                        start, end, bin_width_days, min_total_mentions
+  │
+  │ score  (stage 3, mmap-read rows, compute features)
+  ▼
+stages/score/features.csv            one row per phrase, all features + qualified flag
+  │
+  │ report  (stage 4, sort by amplitude_ratio, render top-N only)
+  ▼
+report.md
+plots/<phrase-id>.pdf                at most top_n qualified
+hist_amplitude_ratio.pdf, hist_gap_ratio.pdf
+```
+
+Plotting is deliberately pushed to the final stage so that expensive PDF rendering happens for ≤100 memes, not for every phrase that passes the basic filter.
 
 ## Local setup
 
 ```bash
 uv sync
-uv run pytest            # 23 passed
+uv run pytest
 ```
 
 ## Cluster setup (one-time, login node)
@@ -50,7 +90,7 @@ python -m empirical_incubation.cli download \
     --dest-dir /scratch/network/yh6580/empirical-incubation/raw
 ```
 
-The downloader is resumable (partial files live at `<name>.part`; re-running picks up where it left off). ~9 files, ~a few GB total.
+The downloader is resumable (partial files live at `<name>.part`; re-running picks up where it left off).
 
 ## Step 2 — Analyze (compute node, offline)
 
@@ -60,11 +100,23 @@ Parameters are hardcoded at the top of `slurm/analyze.slurm` — edit the file, 
 sbatch slurm/analyze.slurm
 ```
 
-Defaults: `START=2008-08-01`, `END=2009-05-01`, `BIN_WIDTH_DAYS=1`. Output goes to `$DATA_ROOT/runs/<UTC-timestamp>-<jobid>/` with:
+Defaults: `START=2008-08-01`, `END=2009-05-01`, `BIN_WIDTH_DAYS=1`, `MIN_TOTAL_MENTIONS=5`, `TOP_N=100`. Output goes to `$DATA_ROOT/runs/<UTC-timestamp>-<jobid>/` with the stage artifacts above plus:
 
-- `report.md` — summary, feature distributions, top-N sleeping beauties, sanity-check plots
-- `plots/<id>.pdf` — per-meme trajectories with phase shading + peak markers
-- `hist_amplitude_ratio.pdf`, `hist_gap_ratio.pdf` — feature distributions
+- `report.md` — summary, feature distributions, top-N sleeping beauties table, sanity-check sample
+- `plots/<phrase-id>.pdf` — per-meme trajectories with phase shading + peak markers (≤ `TOP_N`)
+- `hist_amplitude_ratio.pdf`, `hist_gap_ratio.pdf` — feature distributions across all scored phrases
+
+### Running stages individually
+
+Useful when tuning thresholds or re-plotting without re-aggregating:
+
+```bash
+python -m empirical_incubation.cli clean     --raw-dir RAW --out-dir STAGES/clean    --start 2008-08-01 --end 2009-05-01
+python -m empirical_incubation.cli aggregate --clean-dir STAGES/clean --out-dir STAGES/aggregate \
+                                             --start 2008-08-01 --end 2009-05-01 --bin-width-days 1 --min-total-mentions 5
+python -m empirical_incubation.cli score     --aggregate-dir STAGES/aggregate --out-dir STAGES/score
+python -m empirical_incubation.cli report    --aggregate-dir STAGES/aggregate --score-dir STAGES/score --out-dir REPORT --top-n 100
+```
 
 ## Tuning
 
@@ -74,13 +126,4 @@ The three-phase detector thresholds live in `src/empirical_incubation/detect.py:
 - `min_amplitude_ratio` — main peak / early peak (dominance)
 - `max_middle_fraction_of_main` — middle window must stay this far below the main peak (dormancy depth)
 
-After the first real run, eyeball `report.md` and tune these against the observed distributions.
-
-## CLI reference
-
-```
-python -m empirical_incubation.cli download --manifest FILE --dest-dir DIR
-python -m empirical_incubation.cli analyze  --raw-dir DIR --out-dir DIR \
-                                            --start YYYY-MM-DD --end YYYY-MM-DD \
-                                            [--bin-width-days N]
-```
+After the first real run, eyeball `report.md` + the histograms and re-run the `score` + `report` stages only — no need to touch `clean` / `aggregate`.

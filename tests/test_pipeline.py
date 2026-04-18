@@ -52,4 +52,4 @@ def test_run_analysis_produces_report(tmp_path: Path):
     content = report_path.read_text()
     assert "# Sleeping-Beauty Detection Report" in content
     assert "## Summary" in content
-    assert "Total records:" in content
+    assert "Total phrases scored:" in content
