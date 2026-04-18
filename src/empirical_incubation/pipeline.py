@@ -13,7 +13,7 @@ from itertools import chain
 from pathlib import Path
 
 from .detect import extract_features, is_sleeping_beauty
-from .parse import build_trajectories, parse_quotes_file
+from .parse import build_trajectories, count_total_mentions, parse_quotes_file
 from .report import Record, generate_report
 
 
@@ -31,19 +31,24 @@ def run_analysis(
     out_dir.mkdir(parents=True, exist_ok=True)
 
     quote_files = sorted(raw_dir.glob("*.txt.gz"))
-    record_iter = chain.from_iterable(parse_quotes_file(p) for p in quote_files)
+
+    def _records():
+        return chain.from_iterable(parse_quotes_file(p) for p in quote_files)
+
+    totals = count_total_mentions(_records(), start=start, end=end)
+    allowed = {p for p, c in totals.items() if c >= min_total_mentions}
+    del totals
 
     trajectories = build_trajectories(
-        record_iter,
+        _records(),
         bin_width_days=bin_width_days,
         start=start,
         end=end,
+        allowed_phrases=allowed,
     )
 
     records: list[Record] = []
     for phrase, traj in trajectories.items():
-        if int(traj.sum()) < min_total_mentions:
-            continue
         features = extract_features(traj.astype(float))
         records.append(
             Record(

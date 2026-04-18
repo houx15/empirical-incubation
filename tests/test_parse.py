@@ -68,6 +68,45 @@ def test_build_trajectories_bins_counts_per_phrase():
     assert trajectories["other meme"].tolist() == [0, 1, 0]
 
 
+def test_count_total_mentions_respects_window():
+    records = [
+        ("yes we can", datetime(2008, 9, 1, 12, 0)),
+        ("yes we can", datetime(2008, 9, 2, 8, 0)),
+        ("yes we can", datetime(2008, 9, 10, 0, 0)),  # outside window — dropped
+        ("rare phrase", datetime(2008, 9, 1, 1, 0)),
+        ("other meme", datetime(2008, 9, 3, 8, 0)),
+        ("other meme", datetime(2008, 9, 3, 9, 0)),
+    ]
+
+    counts = parse.count_total_mentions(
+        records,
+        start=datetime(2008, 9, 1),
+        end=datetime(2008, 9, 4),
+    )
+
+    assert counts == {"yes we can": 2, "rare phrase": 1, "other meme": 2}
+
+
+def test_build_trajectories_respects_allowed_phrases():
+    records = [
+        ("yes we can", datetime(2008, 9, 1, 12, 0)),
+        ("rare phrase", datetime(2008, 9, 2, 12, 0)),
+        ("other meme", datetime(2008, 9, 3, 8, 0)),
+    ]
+
+    trajectories = parse.build_trajectories(
+        records,
+        bin_width_days=1,
+        start=datetime(2008, 9, 1),
+        end=datetime(2008, 9, 4),
+        allowed_phrases={"yes we can", "other meme"},
+    )
+
+    assert set(trajectories.keys()) == {"yes we can", "other meme"}
+    assert trajectories["yes we can"].tolist() == [1, 0, 0]
+    assert trajectories["other meme"].tolist() == [0, 0, 1]
+
+
 def test_parse_quotes_file_skips_record_with_no_timestamp(tmp_path: Path):
     content = (
         "P\thttp://a.example/1\n"

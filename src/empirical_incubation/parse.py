@@ -54,22 +54,43 @@ def _flush(
         yield phrase, timestamp
 
 
+def count_total_mentions(
+    records: Iterable[tuple[str, datetime]],
+    *,
+    start: datetime,
+    end: datetime,
+) -> dict[str, int]:
+    counts: dict[str, int] = defaultdict(int)
+    for phrase, ts in records:
+        if ts < start or ts >= end:
+            continue
+        counts[phrase] += 1
+    return dict(counts)
+
+
 def build_trajectories(
     records: Iterable[tuple[str, datetime]],
     *,
     bin_width_days: int,
     start: datetime,
     end: datetime,
+    allowed_phrases: set[str] | None = None,
 ) -> dict[str, np.ndarray]:
     if end <= start:
         raise ValueError("end must be strictly after start")
     bin_width = timedelta(days=bin_width_days)
     n_bins = (end - start) // bin_width
 
-    counts: dict[str, np.ndarray] = defaultdict(lambda: np.zeros(n_bins, dtype=np.int64))
+    counts: dict[str, np.ndarray] = {}
     for phrase, ts in records:
         if ts < start or ts >= end:
             continue
+        if allowed_phrases is not None and phrase not in allowed_phrases:
+            continue
+        traj = counts.get(phrase)
+        if traj is None:
+            traj = np.zeros(n_bins, dtype=np.int64)
+            counts[phrase] = traj
         idx = (ts - start) // bin_width
-        counts[phrase][idx] += 1
-    return dict(counts)
+        traj[idx] += 1
+    return counts
